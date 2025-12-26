@@ -2,99 +2,177 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import InputField from '../components/InputField';
 import Button from '../components/Button';
-import { useAuth } from '../context/AuthContext';
+import api from '../services/api';
 
 function Signup() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
-  const [error, setError] = useState('');
-  const { signup } = useAuth();
   const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors((prev) => ({
+        ...prev,
+        [name]: '',
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = 'Name is required';
+    }
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Passwords do not match';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    
-    if (password !== confirmPassword) {
-      setError("Passwords do not match!");
+
+    if (!validateForm()) {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long");
-      return;
-    }
+    setLoading(true);
+    try {
+      const { confirmPassword, ...signupData } = formData;
+      const response = await api.signup(signupData);
 
-    if (!weight || weight <= 0) {
-      setError("Please enter a valid weight");
-      return;
-    }
+      // Store token in localStorage
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+        localStorage.setItem('user', JSON.stringify({
+          id: response._id,
+          name: response.name,
+          email: response.email,
+        }));
+        
+        // Dispatch custom event to update Navbar
+        window.dispatchEvent(new Event('userLogin'));
+      }
 
-    if (!height || height <= 0) {
-      setError("Please enter a valid height");
-      return;
-    }
-
-    const result = signup(email, password, parseFloat(weight), parseFloat(height));
-    if (result.success) {
-      navigate('/dashboard');
-    } else {
-      setError(result.error || 'Signup failed');
+      // Redirect to home or dashboard
+      navigate('/');
+    } catch (error) {
+      setErrors({ submit: error.message || 'Signup failed. Please try again.' });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[calc(100vh-160px)]">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-        <h1 className="text-4xl font-bold text-center mb-8">Sign Up</h1>
-        <form onSubmit={handleSubmit}>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            Create your account
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Or{' '}
+            <Link
+              to="/login"
+              className="font-medium text-blue-600 hover:text-blue-500"
+            >
+              sign in to your existing account
+            </Link>
+          </p>
+        </div>
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          {errors.submit && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {errors.submit}
+            </div>
+          )}
+
           <InputField
-            label="Email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="your@example.com"
+            label="Full Name"
+            type="text"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            placeholder="Enter your full name"
+            error={errors.name}
+            required
           />
+
+          <InputField
+            label="Email Address"
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="Enter your email"
+            error={errors.email}
+            required
+          />
+
           <InputField
             label="Password"
             type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="********"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="Enter your password"
+            error={errors.password}
+            required
           />
+
           <InputField
             label="Confirm Password"
             type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="********"
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            placeholder="Confirm your password"
+            error={errors.confirmPassword}
+            required
           />
-          <InputField
-            label="Weight (kg)"
-            type="number"
-            value={weight}
-            onChange={(e) => setWeight(e.target.value)}
-            placeholder="e.g., 70"
-          />
-          <InputField
-            label="Height (cm)"
-            type="number"
-            value={height}
-            onChange={(e) => setHeight(e.target.value)}
-            placeholder="e.g., 175"
-          />
-          {error && <p className="text-red-600 text-sm mb-4">{error}</p>}
-          <Button type="submit" className="w-full mt-4">Sign Up</Button>
+
+          <div>
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={loading}
+            >
+              {loading ? 'Creating Account...' : 'Sign Up'}
+            </Button>
+          </div>
         </form>
-        <p className="text-center mt-6 text-gray-600">
-          Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
-        </p>
       </div>
     </div>
   );
 }
 
 export default Signup;
+

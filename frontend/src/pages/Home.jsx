@@ -1,17 +1,15 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
 import Button from '../components/Button';
 
 function Home() {
-  const { user } = useAuth();
 
   return (
     <div className="container mx-auto px-4 py-12">
       {/* Hero Section */}
       <section className="text-center mb-16">
         <h1 className="text-6xl font-extrabold text-gray-900 leading-tight mb-6">
-          Welcome to <span className="text-blue-600">FitLife</span>
+          Welcome to <p className="text-blue-600">FitLife</p>
         </h1>
         <p className="text-2xl text-gray-700 mb-4 max-w-3xl mx-auto">
           Your comprehensive fitness and wellness companion
@@ -19,27 +17,6 @@ function Home() {
         <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
           Track your health, monitor your progress, and achieve your fitness goals with personalized diet plans and workout routines.
         </p>
-        
-        {!user && (
-          <div className="flex justify-center gap-4">
-            <Link to="/signup">
-              <Button className="px-8 py-3 text-lg">Get Started - Sign Up Free</Button>
-            </Link>
-            <Link to="/login">
-              <button className="px-8 py-3 text-lg border-2 border-blue-600 text-blue-600 rounded hover:bg-blue-50 font-bold">
-                Already have an account? Login
-              </button>
-            </Link>
-          </div>
-        )}
-        
-        {user && (
-          <div className="flex justify-center gap-4">
-            <Link to="/dashboard">
-              <Button className="px-8 py-3 text-lg">Go to Dashboard</Button>
-            </Link>
-          </div>
-        )}
       </section>
 
       {/* What FitLife Does Section */}
@@ -92,20 +69,6 @@ function Home() {
         </div>
       </section>
 
-      {/* Call to Action Section */}
-      {!user && (
-        <section className="text-center bg-blue-600 text-white rounded-lg p-12 mb-8">
-          <h2 className="text-4xl font-bold mb-4">Ready to Start Your Fitness Journey?</h2>
-          <p className="text-xl mb-8 opacity-90">
-            Join FitLife today and take control of your health and wellness
-          </p>
-          <Link to="/signup">
-            <button className="px-10 py-4 text-lg font-bold text-black bg-white hover:bg-gray-100 rounded focus:outline-none focus:shadow-outline">
-              Create Your Free Account
-            </button>
-          </Link>
-        </section>
-      )}
 
       {/* Quick Access Section */}
       <section className="text-center">
