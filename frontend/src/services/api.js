@@ -45,6 +45,29 @@ class ApiService {
       body: JSON.stringify(credentials),
     });
   }
+
+  // Health/BMI APIs
+  async calculateBMI(healthData) {
+    return this.request('/health/bmi', {
+      method: 'POST',
+      body: JSON.stringify(healthData),
+    });
+  }
+
+  async calculateCalorieGoal(healthData) {
+    return this.request('/health/calorie-goal', {
+      method: 'POST',
+      body: JSON.stringify(healthData),
+    });
+  }
+
+  async getHealthHistory() {
+    return this.request('/health/history');
+  }
+
+  async getLatestHealth() {
+    return this.request('/health/latest');
+  }
 }
 
 export default new ApiService();
